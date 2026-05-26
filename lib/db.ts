@@ -1,0 +1,24 @@
+import mongoose from "mongoose";
+
+const MONGODB_URI = process.env.MONGODB_URI!;
+
+if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI manquant dans .env.local");
+}
+
+// Cache de la connexion entre les hot-reloads Next.js
+const cached: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } =
+    (global as any).__mongoose ?? { conn: null, promise: null };
+
+(global as any).__mongoose = cached;
+
+export async function connectDB() {
+    if (cached.conn) return cached.conn;
+
+    if (!cached.promise) {
+        cached.promise = mongoose.connect(MONGODB_URI, { bufferCommands: false });
+    }
+
+    cached.conn = await cached.promise;
+    return cached.conn;
+}
